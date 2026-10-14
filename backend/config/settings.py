@@ -1,18 +1,30 @@
 ﻿import os
 from pathlib import Path
 
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-development-only-change-me")
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,assignment-h-u-n-a-r-fh9x.vercel.app").split(",")
-    if host.strip()
-]
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "local-development-only-change-me"
+    else:
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is false.")
+
+allowed_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "")
+if not allowed_hosts.strip():
+    if DEBUG:
+        allowed_hosts = "127.0.0.1,localhost"
+    else:
+        raise ImproperlyConfigured(
+            "DJANGO_ALLOWED_HOSTS must be set when DJANGO_DEBUG is false."
+        )
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(",") if host.strip()]
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
@@ -32,12 +44,27 @@ TEMPLATES = []
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+database_url = os.getenv("DATABASE_URL", "").strip()
+if database_url:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            database_url,
+            conn_max_age=0,
+            ssl_require=True,
+        )
     }
-}
+    DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
+elif DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
+    raise ImproperlyConfigured(
+        "DATABASE_URL must be set when DJANGO_DEBUG is false."
+    )
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
