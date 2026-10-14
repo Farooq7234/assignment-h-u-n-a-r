@@ -10,7 +10,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-development-only-change-me")
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,afterglow-curly-paced.ngrok-free.dev").split(",")
+    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,assignment-h-u-n-a-r-fh9x.vercel.app").split(",")
     if host.strip()
 ]
 
