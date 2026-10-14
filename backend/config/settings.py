@@ -16,7 +16,7 @@ if not SECRET_KEY:
     else:
         raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is false.")
 
-allowed_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "")
+allowed_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "assignment-h-u-n-a-r.onrender.com")
 if not allowed_hosts.strip():
     if DEBUG:
         allowed_hosts = "127.0.0.1,localhost"
@@ -78,7 +78,7 @@ FRONTEND_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
         "FRONTEND_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001",
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,https://hunar-ai.farooqx.in",
     ).split(",")
     if origin.strip()
 ]

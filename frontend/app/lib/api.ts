@@ -41,7 +41,7 @@ type SendResponse = {
 };
 
 const apiBaseUrl = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000/api"
+  "https://assignment-h-u-n-a-r.onrender.com/api"
 ).replace(/\/+$/, "");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

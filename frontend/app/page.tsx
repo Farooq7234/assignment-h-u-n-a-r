@@ -147,12 +147,6 @@ export default function Home() {
     );
   }, [candidates, search]);
 
-  const allVisibleSelected =
-    visibleCandidates.length > 0 &&
-    visibleCandidates.every((candidate) => selectedIds.includes(candidate.id));
-  const someVisibleSelected = visibleCandidates.some((candidate) =>
-    selectedIds.includes(candidate.id),
-  );
   const selectedCandidates = candidates.filter((candidate) => selectedIds.includes(candidate.id));
 
   function toggleCandidate(id: string) {
@@ -161,15 +155,18 @@ export default function Home() {
     );
   }
 
-  function toggleAllVisible() {
-    if (allVisibleSelected) {
+  function toggleAllVisible(candidateIds: string[]) {
+    const allSelected =
+      candidateIds.length > 0 &&
+      candidateIds.every((candidateId) => selectedIds.includes(candidateId));
+    if (allSelected) {
       setSelectedIds((current) =>
-        current.filter((id) => !visibleCandidates.some((candidate) => candidate.id === id)),
+        current.filter((id) => !candidateIds.includes(id)),
       );
       return;
     }
     setSelectedIds((current) =>
-      Array.from(new Set([...current, ...visibleCandidates.map((candidate) => candidate.id)])),
+      Array.from(new Set([...current, ...candidateIds])),
     );
   }
 
@@ -362,7 +359,7 @@ export default function Home() {
         </Alert>
       )}
       <CandidateTable
-        allVisibleSelected={allVisibleSelected}
+        key={`${search}:${candidates.length}`}
         candidates={visibleCandidates}
         loadFailed={candidateLoadFailed}
         loading={loading}
@@ -371,7 +368,6 @@ export default function Home() {
         onViewHistory={(candidate) => void openCommunicationHistory(candidate)}
         search={search}
         selectedIds={selectedIds}
-        someVisibleSelected={someVisibleSelected}
         totalCandidateCount={candidates.length}
       />
       <AddCandidateDialog

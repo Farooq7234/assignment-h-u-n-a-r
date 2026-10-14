@@ -1,9 +1,24 @@
-import { Box, Button, CircularProgress, Link, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { useState } from "react";
+import {
+  Box,
+  CircularProgress,
+  IconButton,
+  Link,
+  MenuItem,
+  Paper,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import type { Candidate } from "./types";
 import {
   bodyCellSx,
   bodyCheckboxSx,
-  CandidateIcon,
   CandidateSelectionCheckbox,
   CandidateStatusChip,
   CandidateTableHeaderCell,
@@ -17,11 +32,9 @@ type CandidateTableProps = {
   totalCandidateCount: number;
   search: string;
   selectedIds: string[];
-  allVisibleSelected: boolean;
-  someVisibleSelected: boolean;
   loading: boolean;
   loadFailed: boolean;
-  onToggleAllVisible: () => void;
+  onToggleAllVisible: (candidateIds: string[]) => void;
   onToggleCandidate: (id: string) => void;
   onViewHistory: (candidate: Candidate) => void;
 };
@@ -31,17 +44,30 @@ export function CandidateTable({
   totalCandidateCount,
   search,
   selectedIds,
-  allVisibleSelected,
-  someVisibleSelected,
   loading,
   loadFailed,
   onToggleAllVisible,
   onToggleCandidate,
   onViewHistory,
 }: CandidateTableProps) {
-  const visibleCandidateCount = candidates.length;
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const filteredCandidateCount = candidates.length;
+  const pageCount = Math.max(1, Math.ceil(filteredCandidateCount / rowsPerPage));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageCandidates = candidates.slice(
+    currentPage * rowsPerPage,
+    (currentPage + 1) * rowsPerPage,
+  );
+  const firstRow = filteredCandidateCount === 0 ? 0 : currentPage * rowsPerPage + 1;
+  const lastRow = Math.min((currentPage + 1) * rowsPerPage, filteredCandidateCount);
+  const allPageSelected =
+    pageCandidates.length > 0 &&
+    pageCandidates.every((candidate) => selectedIds.includes(candidate.id));
+  const somePageSelected = pageCandidates.some((candidate) =>
+    selectedIds.includes(candidate.id),
+  );
   const hasCandidates = totalCandidateCount > 0;
-  const emptyRange = visibleCandidateCount === 0;
 
   return (
     <Paper
@@ -83,10 +109,12 @@ export function CandidateTable({
             <TableRow>
               <TableCell align="center" sx={headerCheckboxSx}>
                 <CandidateSelectionCheckbox
-                  checked={allVisibleSelected}
-                  indeterminate={someVisibleSelected && !allVisibleSelected}
+                  checked={allPageSelected}
+                  indeterminate={somePageSelected && !allPageSelected}
                   label="Select all candidates"
-                  onChange={onToggleAllVisible}
+                  onChange={() =>
+                    onToggleAllVisible(pageCandidates.map((candidate) => candidate.id))
+                  }
                 />
               </TableCell>
               <CandidateTableHeaderCell label="Full name" />
@@ -111,7 +139,7 @@ export function CandidateTable({
                 </TableCell>
               </TableRow>
             )}
-            {candidates.map((candidate) => (
+            {pageCandidates.map((candidate) => (
               <TableRow key={candidate.id}>
                 <TableCell align="center" sx={bodyCheckboxSx}>
                   <CandidateSelectionCheckbox
@@ -160,7 +188,7 @@ export function CandidateTable({
             ))}
 
             {hasCandidates && !search.trim() &&
-              Array.from({ length: Math.max(0, 15 - visibleCandidateCount) }).map((_, index) => (
+              Array.from({ length: Math.max(0, 15 - pageCandidates.length) }).map((_, index) => (
                 <TableRow aria-hidden="true" key={`empty-row-${index}`}>
                   <TableCell sx={emptyBodyCellSx} />
                   <TableCell sx={emptyBodyCellSx} />
@@ -171,7 +199,7 @@ export function CandidateTable({
                 </TableRow>
               ))}
 
-            {hasCandidates && search.trim() && visibleCandidateCount === 0 && (
+            {hasCandidates && search.trim() && filteredCandidateCount === 0 && (
               <TableRow>
                 <TableCell colSpan={6} sx={{ ...bodyCellSx, height: 84, textAlign: "center" }}>
                   No matching candidates
@@ -234,33 +262,79 @@ export function CandidateTable({
             alignItems: "center",
             display: "flex",
             flexShrink: 0,
-            height: 48,
-            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 1.5,
+            minHeight: 48,
             px: 1,
           }}
         >
-          <Box sx={{ alignItems: "center", display: "flex", gap: 3 }}>
+          <Box sx={{ alignItems: "center", display: "flex", flexWrap: "wrap", gap: 2 }}>
             <Box sx={{ alignItems: "center", display: "flex", gap: 1 }}>
               <Typography sx={{ color: "rgba(0,0,0,0.87)", fontSize: 14 }}>
                 Rows per page:
               </Typography>
-              <Button
-                endIcon={<CandidateIcon name="arrow-dropdown" />}
-                sx={{ color: "rgba(0,0,0,0.87)", minWidth: 0, p: 0, fontSize: 14 }}
+              <Select
+                aria-label="Rows per page"
+                onChange={(event) => {
+                  setRowsPerPage(Number(event.target.value));
+                  setPage(0);
+                }}
+                size="small"
+                value={rowsPerPage}
+                variant="standard"
+                sx={{
+                  color: "rgba(0,0,0,0.87)",
+                  fontSize: 14,
+                  minWidth: 42,
+                  "& .MuiSelect-select": { py: 0.25, pr: 2.5 },
+                  "&:before, &:after": { display: "none" },
+                }}
               >
-                10
-              </Button>
+                {[10, 25, 50].map((pageSize) => (
+                  <MenuItem key={pageSize} value={pageSize}>
+                    {pageSize}
+                  </MenuItem>
+                ))}
+              </Select>
             </Box>
             <Typography sx={{ color: "rgba(0,0,0,0.87)", fontSize: 14 }}>
-              {emptyRange ? "0-0 of 0" : `1-${visibleCandidateCount} of ${totalCandidateCount}`}
+              {`${firstRow}-${lastRow} of ${filteredCandidateCount}`}
             </Typography>
-          </Box>
-          <Box sx={{ alignItems: "center", display: "flex", gap: 2 }}>
-            <CandidateIcon name="pagination" />
-            <CandidateIcon name="chevron-left" />
-            <CandidateIcon name="chevron-right" />
-            <Box sx={{ transform: "rotate(180deg)" }}>
-              <CandidateIcon name="pagination" />
+            <Typography
+              aria-live="polite"
+              sx={{ color: "rgba(0,0,0,0.6)", fontSize: 13, whiteSpace: "nowrap" }}
+            >
+              Page {currentPage + 1} of {pageCount}
+            </Typography>
+            <Box sx={{ alignItems: "center", display: "flex", gap: 0.5 }}>
+              <IconButton
+                aria-label="Previous page"
+                disabled={currentPage === 0}
+                onClick={() => setPage(currentPage - 1)}
+                size="small"
+                sx={{ height: 32, width: 32 }}
+              >
+                <Box
+                  alt=""
+                  component="img"
+                  src={candidateAsset("chevron-left")}
+                  sx={{ height: 16, width: 16 }}
+                />
+              </IconButton>
+              <IconButton
+                aria-label="Next page"
+                disabled={currentPage >= pageCount - 1}
+                onClick={() => setPage(currentPage + 1)}
+                size="small"
+                sx={{ height: 32, width: 32 }}
+              >
+                <Box
+                  alt=""
+                  component="img"
+                  src={candidateAsset("chevron-right")}
+                  sx={{ height: 16, width: 16 }}
+                />
+              </IconButton>
             </Box>
           </Box>
         </Box>
