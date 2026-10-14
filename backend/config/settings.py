@@ -16,7 +16,7 @@ if not SECRET_KEY:
     else:
         raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is false.")
 
-allowed_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "assignment-h-u-n-a-r.onrender.com")
+allowed_hosts = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,assignment-h-u-n-a-r.onrender.com")
 if not allowed_hosts.strip():
     if DEBUG:
         allowed_hosts = "127.0.0.1,localhost"
